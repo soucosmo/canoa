@@ -1,9 +1,9 @@
 use actix_web::{App, HttpServer, web::{get, post, scope, Data}};
-use bollard::image::ListImagesOptions;
-use std::sync::{Mutex, Arc};
+use std::sync::Mutex;
 use bollard::Docker;
-mod http;
+mod http_validate;
 mod types;
+mod http;
 
 
 #[actix_web::main] // or #[tokio::main]
