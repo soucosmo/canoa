@@ -1,15 +1,19 @@
-use actix_web::{web::Data, Responder, HttpResponse, web::Json};
-use crate::http_validate::PodRunValidate;
+use crate::{http::{BackgroundActor, BackgroundMessage}, http_validate::PodRunValidate};
+use actix_web::{web::{Data, Json}, Responder, HttpResponse};
 use crate::types::{AppState, Pod, Resources};
 use validify::Validify;
 use super::HttpServer;
 use std::sync::Mutex;
 use serde_json::json;
 use uuid::Uuid;
-
+use actix::Addr;
 
 impl HttpServer {
-    pub async fn pod_run(app_state: Data<Mutex<AppState>>, mut data: Json<PodRunValidate>) -> impl Responder {
+    pub async fn pod_run(
+        app_state: Data<Mutex<AppState>>,
+        mut data: Json<PodRunValidate>,
+        background_actor: Data<Addr<BackgroundActor>>,
+    ) -> impl Responder {
         match data.validify() {
             Ok(_) => {
                 let mut state = app_state.lock().unwrap();
@@ -46,6 +50,12 @@ impl HttpServer {
                 };
 
                 state.pods.insert(pod_id.clone(), pod);
+
+                let rr = background_actor.send(BackgroundMessage {
+                    app_state: state.clone(),
+                }).await;
+
+                println!("foooooooi {:?}", rr);
 
                 HttpResponse::Accepted().json(json!({
                     "id": pod_id,
